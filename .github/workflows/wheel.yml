@@ -26,15 +26,18 @@ jobs:
       shell: bash
       env:
         PYTKET_RUN_REMOTE_TESTS: 1
-      run: |
-        ./.github/workflows/build-test mypy
+        PYTKET_REMOTE_AZURE_RESOURCE_ID: ${{ secrets.PYTKET_REMOTE_AZURE_RESOURCE_ID }}
+        PYTKET_REMOTE_AZURE_LOCATION: ${{ secrets.PYTKET_REMOTE_AZURE_LOCATION }}
+        PYTKET_REMOTE_AZURE_STORAGE: ${{ secrets.PYTKET_REMOTE_AZURE_STORAGE }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      run: ./.github/workflows/build-test mypy
     - name: Install docs dependencies
-      run: |
-        pip install -r .github/workflows/docs/requirements.txt
+      run: pip install -r .github/workflows/docs/requirements.txt
     - name: Build docs
       timeout-minutes: 20
-      run: |
-        ./.github/workflows/docs/check-build-docs
+      run: ./.github/workflows/docs/check-build-docs
     - uses: actions/upload-artifact@v4
       if: github.event_name == 'release' || contains(github.ref, 'refs/heads/wheel')
       with:

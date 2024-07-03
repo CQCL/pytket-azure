@@ -12,6 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections import Counter
+import os
+import pytest
+from pytket.circuit import Circuit
+from pytket.extensions.azure import AzureBackend
 
-def test_azure_backend() -> None:
-    pass
+skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
+REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires Azure credentials)"
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize("azure_backend", ["ionq.simulator"], indirect=True)
+def test_ionq_simulator(azure_backend: AzureBackend) -> None:
+    c = Circuit(2).H(0).CX(0, 1).measure_all()
+    b = azure_backend
+    c1 = b.get_compiled_circuit(c)
+    if b.is_available() and b.average_queue_time_s() < 60:
+        h = b.process_circuit(c1, n_shots=10)
+        r = b.get_result(h)
+        counts = r.get_counts()
+        assert counts == Counter({(0, 0): 5, (1, 1): 5})
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize("azure_backend", ["quantinuum.sim.h1-1e"], indirect=True)
+def test_quantinuum_sim_h11e(azure_backend: AzureBackend) -> None:
+    c = Circuit(2).H(0).CX(0, 1).measure_all()
+    b = azure_backend
+    c1 = b.get_compiled_circuit(c)
+    if b.is_available() and b.average_queue_time_s() < 600:
+        h = b.process_circuit(c1, n_shots=1000)
+        r = b.get_result(h)
+        counts = r.get_counts()
+        assert sum(counts.values()) == 1000
