@@ -14,9 +14,10 @@
 
 from ast import literal_eval
 from collections import Counter
-from typing import cast, Any, Dict, List, Optional, Sequence, Tuple, Type, Union
-from azure.quantum import Job, Workspace
 from functools import cache
+from typing import cast, Any, Dict, List, Optional, Sequence, Union
+from azure.quantum import Job, Workspace
+from qiskit_qir import to_qir_module
 from pytket.extensions.azure._metadata import __extension_version__
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes
@@ -29,7 +30,6 @@ from pytket.extensions.qiskit import tk_to_qiskit
 from pytket.passes import AutoRebase, BasePass
 from pytket.predicates import GateSetPredicate, Predicate
 from pytket.utils import OutcomeArray
-from qiskit_qir import to_qir_module
 from .config import AzureConfig
 
 
@@ -122,7 +122,14 @@ class AzureBackend(Backend):
     ) -> List[ResultHandle]:
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.
+
+        Supported kwargs:
+
+        - option_params: a dictionary with string keys and arbitrary values;
+          key-value pairs in the dictionary are passed as input parameters to
+          the backend. Their semantics are backend-dependent.
         """
+        option_params = kwargs.get("option_params")
         circuits = list(circuits)
         n_shots_list = Backend._get_n_shots_as_list(
             n_shots,
@@ -138,16 +145,19 @@ class AzureBackend(Backend):
             qkc = tk_to_qiskit(c)
             module, entry_points = to_qir_module(qkc)
             assert len(entry_points) == 1
+            input_params = {
+                "entryPoint": entry_points[0],
+                "arguments": [],
+                "count": n_shots,
+            }
+            if option_params is not None:
+                input_params.update(option_params)
             job = self._target.submit(
                 input_data=module.bitcode,
                 input_data_format="qir.v1",
                 output_data_format="microsoft.quantum-results.v1",
                 name=f"job_{i}",
-                input_params={
-                    "entryPoint": entry_points[0],
-                    "arguments": [],
-                    "count": n_shots,
-                },
+                input_params=input_params,
             )
             jobid: str = job.id
             handle = ResultHandle(jobid)
