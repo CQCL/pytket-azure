@@ -14,9 +14,10 @@
 
 from ast import literal_eval
 from collections import Counter
-from typing import cast, Any, Dict, List, Optional, Sequence, Tuple, Type, Union
-from azure.quantum import Job, Workspace
 from functools import cache
+from typing import cast, Any, Dict, List, Optional, Sequence, Type, Union
+from azure.quantum import Job, Workspace
+from qiskit_qir import to_qir_module
 from pytket.extensions.azure._metadata import __extension_version__
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes
@@ -29,7 +30,6 @@ from pytket.extensions.qiskit import tk_to_qiskit
 from pytket.passes import AutoRebase, BasePass
 from pytket.predicates import GateSetPredicate, Predicate
 from pytket.utils import OutcomeArray
-from qiskit_qir import to_qir_module
 from .config import AzureConfig
 
 
