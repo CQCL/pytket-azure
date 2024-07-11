@@ -15,7 +15,7 @@
 from ast import literal_eval
 from collections import Counter
 from functools import cache
-from typing import cast, Any, Dict, List, Optional, Sequence, Type, Union
+from typing import cast, Any, Dict, List, Optional, Sequence, Union
 from azure.quantum import Job, Workspace
 from qiskit_qir import to_qir_module
 from pytket.extensions.azure._metadata import __extension_version__
