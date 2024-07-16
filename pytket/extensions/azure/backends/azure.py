@@ -61,7 +61,7 @@ _GATE_SET = {
     OpType.Y,
     OpType.Z,
     OpType.ZZPhase,
-    OpType.Reset
+    OpType.Reset,
 }
 
 
