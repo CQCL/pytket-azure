@@ -128,8 +128,11 @@ class AzureBackend(Backend):
         - option_params: a dictionary with string keys and arbitrary values;
           key-value pairs in the dictionary are passed as input parameters to
           the backend. Their semantics are backend-dependent.
+        - job_name_prefix: A custom prefix to add to all job_names. The default is 
+          to use the prefix `azure-quantum-job`.
         """
         option_params = kwargs.get("option_params")
+        job_name_prefix = kwargs.get("job_name_prefix", "job")
         circuits = list(circuits)
         n_shots_list = Backend._get_n_shots_as_list(
             n_shots,
@@ -156,7 +159,7 @@ class AzureBackend(Backend):
                 input_data=module.bitcode,
                 input_data_format="qir.v1",
                 output_data_format="microsoft.quantum-results.v1",
-                name=f"job_{i}",
+                name=f"{job_name_prefix}-{i}",
                 input_params=input_params,
             )
             jobid: str = job.id
