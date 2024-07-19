@@ -128,7 +128,7 @@ class AzureBackend(Backend):
         - option_params: a dictionary with string keys and arbitrary values;
           key-value pairs in the dictionary are passed as input parameters to
           the backend. Their semantics are backend-dependent.
-        - job_name_prefix: A custom prefix to add to all job_names. The default is 
+        - job_name_prefix: A custom prefix to add to all job_names. The default is
           to use the prefix `azure-quantum-job`.
         """
         option_params = kwargs.get("option_params")
