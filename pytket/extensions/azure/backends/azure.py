@@ -198,6 +198,8 @@ class AzureBackend(Backend):
             return CircuitStatus(StatusEnum.COMPLETED)
         elif status == "Waiting":
             return CircuitStatus(StatusEnum.QUEUED)
+        elif status == "Executing":
+            return CircuitStatus(StatusEnum.RUNNING)
         elif status == "Failed":
             return CircuitStatus(StatusEnum.ERROR, job.details.error_data.message)
         else:
