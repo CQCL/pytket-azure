@@ -15,6 +15,7 @@
 from ast import literal_eval
 from collections import Counter
 from functools import cache
+import os
 from typing import cast, Any, Dict, List, Optional, Sequence, Union
 from azure.quantum import Job, Workspace
 from qiskit_qir import to_qir_module
@@ -36,12 +37,15 @@ from .config import AzureConfig
 def _get_workspace(
     resource_id: Optional[str] = None, location: Optional[str] = None
 ) -> Workspace:
-    config = AzureConfig.from_default_config_file()
-    if resource_id is None:
-        resource_id = config.resource_id
-    if location is None:
-        location = config.location
-    return Workspace(resource_id=resource_id, location=location)
+    if os.getenv("AZURE_QUANTUM_CONNECTION_STRING") is not None:
+        return Workspace()
+    else:
+        config = AzureConfig.from_default_config_file()
+        if resource_id is None:
+            resource_id = config.resource_id
+        if location is None:
+            location = config.location
+        return Workspace(resource_id=resource_id, location=location)
 
 
 _GATE_SET = {
@@ -74,13 +78,21 @@ class AzureBackend(Backend):
     ):
         """Construct an Azure backend for a device.
 
+        If the environment variable `AZURE_QUANTUM_CONNECTION_STRING` is set,
+        this is used for authentication. Otherwise, the Azure Quantum
+        `resource_id` and `location` are read from pytket config, if set, or
+        else from the provided arguments.
+
 
         :param name: Device name. Use `AzureBackend.available_devices()` to
             obtain a list of possible device names.
         :param resource_id: Azure Quantum `resource_id`. If omitted this is read
-            from config. (See `config.set_azure_config()`.)
+            from config (see `set_azure_config()`), unless the environment
+            variable `AZURE_QUANTUM_CONNECTION_STRING` is set in which case this
+            is used.
         :param location: Azure Quantum `location`. If omitted this is read from
-            config. (See `config.set_azure_config()`.)
+            config (see `set_azure_config()`), unless the environment variable
+            `AZURE_QUANTUM_CONNECTION_STRING` is set in which case this is used.
         """
         super().__init__()
         self._workspace = _get_workspace(resource_id, location)
@@ -243,7 +255,8 @@ class AzureBackend(Backend):
         - resource_id (str)
         - location (str)
 
-        If omitted these are read from config.
+        If omitted these are read from config, unless the environment variable
+        `AZURE_QUANTUM_CONNECTION_STRING` is set in which case it is used.
         """
         resource_id = kwargs.get("resource_id")
         location = kwargs.get("location")
