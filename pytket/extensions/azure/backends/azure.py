@@ -222,11 +222,15 @@ class AzureBackend(Backend):
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """
         See :py:meth:`pytket.backends.Backend.get_result`.
+
+        Supported kwargs:
+
+        - timeout (int): timeout in seconds
         """
         try:
             return super().get_result(handle)
         except CircuitNotRunError:
-            self._jobs[handle].wait_until_completed()
+            self._jobs[handle].wait_until_completed(timeout_secs=kwargs.get("timeout"))
             circuit_status = self.circuit_status(handle)
             if circuit_status.status is StatusEnum.COMPLETED:
                 return cast(BackendResult, self._cache[handle]["result"])
