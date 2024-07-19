@@ -16,3 +16,4 @@
 """
 
 from .azure import AzureBackend
+from .config import AzureConfig, set_azure_config
