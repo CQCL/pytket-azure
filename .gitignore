@@ -1,4 +1,3 @@
 *.egg-info
 *.pyc
 pytket/extensions/azure/_metadata.py
-.env
