@@ -24,6 +24,17 @@ shutil.copy(
     os.path.join("pytket", "extensions", "azure", "_metadata.py"),
 )
 
+long_description = """
+[Pytket](https://tket.quantinuum.com/api-docs/index.html) is a python module
+providing an extensive set of tools for compiling and executing quantum
+circuits.
+
+The `pytket-azure` extension allows `pytket` circuits to be submitted and
+executed on various devices and simulators via
+[Azure Quantum](https://learn.microsoft.com/en-us/azure/quantum/).
+
+Note that this package is still at an early, experimental stage of development.
+"""
 
 setup(
     name="pytket-azure",
@@ -37,7 +48,7 @@ setup(
         "Tracker": "https://github.com/CQCL/pytket-azure/issues",
     },
     description="Extension for pytket, providing access to Azure devices",
-    long_description=open("README.md").read(),
+    long_description=long_description,
     long_description_content_type="text/markdown",
     license="Apache 2",
     packages=find_namespace_packages(include=["pytket.*"]),
