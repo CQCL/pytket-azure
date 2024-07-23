@@ -60,7 +60,7 @@ def test_quantinuum_option_params(azure_backend: AzureBackend) -> None:
     b = azure_backend
     c1 = b.get_compiled_circuit(c)
     if b.is_available() and b.average_queue_time_s() < 600:
-        h = b.process_circuit(c1, n_shots=1000, option_params={"error_model": False})
+        h = b.process_circuit(c1, n_shots=1000, option_params={"error_model": False})  # type: ignore
         r = b.get_result(h, timeout=1200)
         counts = r.get_counts()
         assert all(x0 == x1 for x0, x1 in counts.keys())
