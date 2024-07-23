@@ -163,7 +163,7 @@ class AzureBackend(Backend):
                 "count": n_shots,
             }
             if option_params is not None:
-                input_params.update(option_params)
+                input_params.update(option_params)  # type: ignore
             job = self._target.submit(
                 input_data=module.bitcode,
                 input_data_format="qir.v1",
