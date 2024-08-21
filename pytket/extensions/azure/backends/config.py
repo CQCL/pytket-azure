@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""IQM config."""
+"""Azure config."""
 
 from typing import Any, Dict, Optional, Type, ClassVar
 from dataclasses import dataclass
@@ -27,6 +27,8 @@ class AzureConfig(PytketExtConfig):
 
     resource_id: Optional[str]
     location: Optional[str]
+    connection_string: Optional[str]
+    use_string: bool = False
 
     @classmethod
     def from_extension_dict(
@@ -35,17 +37,26 @@ class AzureConfig(PytketExtConfig):
         return cls(
             ext_dict.get("resource_id"),
             ext_dict.get("location"),
+            ext_dict.get("connection_string"),
+            ext_dict.get("use_string"),
         )
 
 
 def set_azure_config(
     resource_id: Optional[str] = None,
     location: Optional[str] = None,
+    connection_string: Optional[str] = None,
+    use_string: bool = False,
 ) -> None:
     """Save Azure confuguration."""
     config = AzureConfig.from_default_config_file()
-    if resource_id is not None:
-        config.resource_id = resource_id
-    if location is not None:
-        config.location = location
+    if use_string:
+        config.use_string = use_string
+        if connection_string is not None:
+            config.connection_string = connection_string
+    else:
+        if resource_id is not None:
+            config.resource_id = resource_id
+        if location is not None:
+            config.location = location
     config.update_default_config_file()

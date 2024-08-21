@@ -35,17 +35,24 @@ from .config import AzureConfig
 
 
 def _get_workspace(
-    resource_id: Optional[str] = None, location: Optional[str] = None
+    resource_id: Optional[str] = None,
+    location: Optional[str] = None,
+    connection_string: Optional[str] = None,
 ) -> Workspace:
     if os.getenv("AZURE_QUANTUM_CONNECTION_STRING") is not None:
         return Workspace()
     else:
         config = AzureConfig.from_default_config_file()
-        if resource_id is None:
-            resource_id = config.resource_id
-        if location is None:
-            location = config.location
-        return Workspace(resource_id=resource_id, location=location)
+        if config.use_string:
+            if connection_string is None:
+                connection_string = config.connection_string
+            return Workspace.from_connection_string(connection_string)
+        else:
+            if resource_id is None:
+                resource_id = config.resource_id
+            if location is None:
+                location = config.location
+            return Workspace(resource_id=resource_id, location=location)
 
 
 _GATE_SET = {
@@ -75,6 +82,8 @@ class AzureBackend(Backend):
         name: str,
         resource_id: Optional[str] = None,
         location: Optional[str] = None,
+        connection_string: Optional[str] = None,
+        use_string: bool = False,
     ):
         """Construct an Azure backend for a device.
 
@@ -93,9 +102,19 @@ class AzureBackend(Backend):
         :param location: Azure Quantum `location`. If omitted this is read from
             config (see `set_azure_config()`), unless the environment variable
             `AZURE_QUANTUM_CONNECTION_STRING` is set in which case this is used.
+        :param connection_string: Azure Quantum `connection_string`.
+            The connection_string can be set on Azure Quantum.
+            See https://learn.microsoft.com/en-us/azure/quantum/how-to-connect-workspace
+            If omitted this is read from config (see `set_azure_config()`), unless
+            the environment variable `AZURE_QUANTUM_CONNECTION_STRING` is set in which
+            case this is used.
+        :param use_string: Use the `connection_string`. Defaults to False.
         """
         super().__init__()
-        self._workspace = _get_workspace(resource_id, location)
+        if use_string:
+            self._workspace = _get_workspace(connection_string=connection_string)
+        else:
+            self._workspace = _get_workspace(resource_id, location)
         self._target = self._workspace.get_targets(name=name)
         self._backendinfo = BackendInfo(
             name=type(self).__name__,
@@ -258,13 +277,19 @@ class AzureBackend(Backend):
 
         - resource_id (str)
         - location (str)
+        - connection_string (str)
+        - use_string (bool) = False
 
         If omitted these are read from config, unless the environment variable
         `AZURE_QUANTUM_CONNECTION_STRING` is set in which case it is used.
         """
-        resource_id = kwargs.get("resource_id")
-        location = kwargs.get("location")
-        workspace = _get_workspace(resource_id, location)
+        if kwargs.get("use_string"):
+            connection_string = kwargs.get("connection_string")
+            workspace = _get_workspace(connection_string=connection_string)
+        else:
+            resource_id = kwargs.get("resource_id")
+            location = kwargs.get("location")
+            workspace = _get_workspace(resource_id, location)
         return [
             BackendInfo(
                 name=cls.__name__,
