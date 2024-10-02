@@ -28,8 +28,15 @@ jobs:
         PYTKET_RUN_REMOTE_TESTS: 1
         AZURE_QUANTUM_CONNECTION_STRING: ${{ secrets.AZURE_QUANTUM_CONNECTION_STRING }}
       run: ./.github/workflows/build-test mypy
+    - name: install poetry
+      run: pip install poetry
     - name: Install docs dependencies
-      run: pip install -r .github/workflows/docs/requirements.txt
+      run: |
+        cd docs
+        bash ./install.sh
+        for w in `find wheelhouse/ -type f -name "*.whl"` ; do poetry install $w ; done
     - name: Build docs
       timeout-minutes: 20
-      run: ./.github/workflows/docs/check-build-docs
+      run: |
+        cd docs
+        poetry run bash ./build-docs.sh
