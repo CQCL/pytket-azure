@@ -5,3 +5,4 @@ docs/pyproject.toml
 docs/poetry.lock
 .venv
 .DS_Store
+docs/build
