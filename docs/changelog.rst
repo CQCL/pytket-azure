@@ -1,3 +1,5 @@
+.. currentmodule:: pytket.extensions.azure
+
 Changelog
 ~~~~~~~~~
 
