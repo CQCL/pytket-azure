@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import Counter
 import os
+from collections import Counter
 from warnings import warn
+
 import pytest
+
 from pytket.circuit import Circuit
 from pytket.extensions.azure import AzureBackend
 

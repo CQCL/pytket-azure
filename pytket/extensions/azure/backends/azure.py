@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from ast import literal_eval
 from collections import Counter
+from collections.abc import Sequence
 from functools import cache
-import os
-from typing import cast, Any, Dict, List, Optional, Sequence, Union
-from azure.quantum import Job, Workspace
+from typing import Any, Dict, List, Optional, Union, cast
+
 from qiskit_qir import to_qir_module
-from pytket.extensions.azure._metadata import __extension_version__
+
+from azure.quantum import Job, Workspace
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes
 from pytket.backends.backend_exceptions import CircuitNotRunError
@@ -27,10 +29,12 @@ from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.circuit import Circuit, OpType
+from pytket.extensions.azure._metadata import __extension_version__
 from pytket.extensions.qiskit import tk_to_qiskit
 from pytket.passes import AutoRebase, BasePass
 from pytket.predicates import GateSetPredicate, Predicate
 from pytket.utils import OutcomeArray
+
 from .config import AzureConfig
 
 
