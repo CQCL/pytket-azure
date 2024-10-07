@@ -16,5 +16,5 @@
 """
 
 # _metadata.py is copied to the folder after installation.
-from ._metadata import __extension_version__, __extension_name__
+from ._metadata import __extension_name__, __extension_version__
 from .backends import AzureBackend, AzureConfig, set_azure_config
