@@ -3,6 +3,11 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Add connection for Azure Quantum workspace using access key ``connection_string``.
+
 0.2.0 (October 2024)
 ---------------------
 
