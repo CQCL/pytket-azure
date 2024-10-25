@@ -14,8 +14,9 @@
 
 """Azure config."""
 
-from typing import Any, Dict, Optional, Type, ClassVar
 from dataclasses import dataclass
+from typing import Any, ClassVar, Optional
+
 from pytket.config import PytketExtConfig
 
 
@@ -32,7 +33,7 @@ class AzureConfig(PytketExtConfig):
 
     @classmethod
     def from_extension_dict(
-        cls: Type["AzureConfig"], ext_dict: Dict[str, Any]
+        cls: type["AzureConfig"], ext_dict: dict[str, Any]
     ) -> "AzureConfig":
         return cls(
             ext_dict.get("resource_id"),

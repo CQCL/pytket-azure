@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import Counter
 import os
+from collections import Counter
 from warnings import warn
+
 import pytest
+
 from pytket.circuit import Circuit
 from pytket.extensions.azure import AzureBackend
 
@@ -63,6 +65,6 @@ def test_quantinuum_option_params(azure_backend: AzureBackend) -> None:
         h = b.process_circuit(c1, n_shots=1000, option_params={"error_model": False})  # type: ignore
         r = b.get_result(h, timeout=1200)
         counts = r.get_counts()
-        assert all(x0 == x1 for x0, x1 in counts.keys())
+        assert all(x0 == x1 for x0, x1 in counts)
     else:
         warn("quantinuum.sim.h1-1e unavailable or queue time >= 600s: not submitting")
