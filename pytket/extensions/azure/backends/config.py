@@ -39,7 +39,7 @@ class AzureConfig(PytketExtConfig):
             ext_dict.get("resource_id"),
             ext_dict.get("location"),
             ext_dict.get("connection_string"),
-            ext_dict.get("use_string"),
+            ext_dict.get("use_string", False),
         )
 
 
