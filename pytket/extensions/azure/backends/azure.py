@@ -19,8 +19,6 @@ from collections.abc import Sequence
 from functools import cache
 from typing import Any, Optional, Union, cast
 
-from qiskit_qir import to_qir_module
-
 from azure.quantum import Job, Workspace
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes
@@ -30,9 +28,9 @@ from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.circuit import Circuit, OpType
 from pytket.extensions.azure._metadata import __extension_version__
-from pytket.extensions.qiskit import tk_to_qiskit
 from pytket.passes import AutoRebase, BasePass
 from pytket.predicates import GateSetPredicate, Predicate
+from pytket.qir import QIRFormat, QIRProfile, pytket_to_qir
 from pytket.utils import OutcomeArray
 
 from .config import AzureConfig
@@ -76,6 +74,26 @@ _GATE_SET = {
     OpType.Y,
     OpType.Z,
 }
+
+
+_ADDITIONAL_GATES = {
+    OpType.Reset,
+    OpType.Measure,
+    OpType.Barrier,
+    OpType.RangePredicate,
+    OpType.MultiBit,
+    OpType.ExplicitPredicate,
+    OpType.ExplicitModifier,
+    OpType.SetBits,
+    OpType.CopyBits,
+    OpType.ClassicalExpBox,
+    OpType.ClExpr,
+    OpType.WASM,
+}
+
+
+_ALL_GATES = _ADDITIONAL_GATES.copy()
+_ALL_GATES.update(_GATE_SET)
 
 
 class AzureBackend(Backend):
@@ -136,7 +154,7 @@ class AzureBackend(Backend):
 
     @property
     def required_predicates(self) -> list[Predicate]:
-        return [GateSetPredicate(_GATE_SET)]
+        return [GateSetPredicate(_ALL_GATES)]
 
     def rebase_pass(self) -> BasePass:
         return AutoRebase(gateset=_GATE_SET)
@@ -177,18 +195,33 @@ class AzureBackend(Backend):
 
         handles = []
         for i, (c, n_shots) in enumerate(zip(circuits, n_shots_list)):
-            qkc = tk_to_qiskit(c)
-            module, entry_points = to_qir_module(qkc)
-            assert len(entry_points) == 1
             input_params = {
-                "entryPoint": entry_points[0],
+                "entryPoint": "main",
                 "arguments": [],
                 "count": n_shots,
             }
+            if self._backendinfo.device_name == "ionq.simulator":
+                module_bitcode = pytket_to_qir(
+                    c,
+                    qir_format=QIRFormat.BINARY,
+                    int_type=64,
+                    cut_pytket_register=False,
+                    profile=QIRProfile.AZUREBASE,
+                )
+            else:
+                module_bitcode = pytket_to_qir(
+                    c,
+                    qir_format=QIRFormat.BINARY,
+                    int_type=64,
+                    cut_pytket_register=False,
+                    profile=QIRProfile.AZUREADAPTIVE,
+                )
+
             if option_params is not None:
                 input_params.update(option_params)  # type: ignore
             job = self._target.submit(
-                input_data=module.bitcode,
+                # input_data=module.bitcode,
+                input_data=module_bitcode,
                 input_data_format="qir.v1",
                 output_data_format="microsoft.quantum-results.v1",
                 name=f"job_{i}",

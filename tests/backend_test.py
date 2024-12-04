@@ -18,7 +18,7 @@ from warnings import warn
 
 import pytest
 
-from pytket.circuit import Circuit
+from pytket.circuit import Circuit, Qubit
 from pytket.extensions.azure import AzureBackend
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
@@ -44,6 +44,51 @@ def test_ionq_simulator(azure_backend: AzureBackend) -> None:
 @pytest.mark.parametrize("azure_backend", ["quantinuum.sim.h1-1sc"], indirect=True)
 def test_quantinuum_sim_h11e(azure_backend: AzureBackend) -> None:
     c = Circuit(2).H(0).CX(0, 1).measure_all()
+    b = azure_backend
+    c1 = b.get_compiled_circuit(c)
+    if b.is_available() and b.average_queue_time_s() < 60:
+        h = b.process_circuit(c1, n_shots=1000)
+        r = b.get_result(h, timeout=120)
+        counts = r.get_counts()
+        assert sum(counts.values()) == 1000
+    else:
+        warn("quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting")
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize("azure_backend", ["quantinuum.sim.h1-1sc"], indirect=True)
+def test_quantinuum_sim_h11e_two_regs(azure_backend: AzureBackend) -> None:
+    c = Circuit(2, name="test_classical")
+    a = c.add_c_register("a", 10)
+    b = c.add_c_register("b", 11)
+
+    c.Measure(Qubit(0), a[0])
+    c.Measure(Qubit(1), b[0])
+
+    b = azure_backend
+    c1 = b.get_compiled_circuit(c)
+    if b.is_available() and b.average_queue_time_s() < 60:
+        h = b.process_circuit(c1, n_shots=1000)
+        r = b.get_result(h, timeout=120)
+        counts = r.get_counts()
+        assert sum(counts.values()) == 1000
+    else:
+        warn("quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting")
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize("azure_backend", ["quantinuum.sim.h1-1sc"], indirect=True)
+def test_quantinuum_sim_h11e_complex(azure_backend: AzureBackend) -> None:
+    c = Circuit(1, name="test_classical")
+    a = c.add_c_register("a", 10)
+    b = c.add_c_register("b", 11)
+    d = c.add_c_register("d", 20)
+
+    c.Measure(Qubit(0), a[0])
+
+    c.add_c_setbits([True, True] + [False] * 9, list(b))
+
+    c.add_classicalexpbox_register(a + b, d)  # type: ignore
     b = azure_backend
     c1 = b.get_compiled_circuit(c)
     if b.is_available() and b.average_queue_time_s() < 60:
