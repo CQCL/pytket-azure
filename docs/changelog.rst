@@ -3,6 +3,12 @@
 Changelog
 ~~~~~~~~~
 
+0.4.0rc0 (December 2024)
+------------------------
+
+* Update minimum pytket version to 1.37.0.
+* Update minimum pytket-qir version to 0.19.0.
+
 0.3.0 (October 2024)
 --------------------
 

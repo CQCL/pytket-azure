@@ -14,11 +14,18 @@
 
 import os
 from collections import Counter
-from warnings import warn
 
 import pytest
 
-from pytket.circuit import Circuit
+from pytket.circuit import Circuit, Qubit, if_not_bit
+from pytket.circuit.logic_exp import (
+    reg_eq,
+    reg_geq,
+    reg_gt,
+    reg_leq,
+    reg_lt,
+    reg_neq,
+)
 from pytket.extensions.azure import AzureBackend
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
@@ -26,6 +33,7 @@ REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires Azure credentials)"
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.skip(reason="resulthandling currently not supported for ionq")
 @pytest.mark.parametrize("azure_backend", ["ionq.simulator"], indirect=True)
 def test_ionq_simulator(azure_backend: AzureBackend) -> None:
     c = Circuit(2).H(0).CX(0, 1).measure_all()
@@ -37,7 +45,9 @@ def test_ionq_simulator(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert counts == Counter({(0, 0): 5, (1, 1): 5})
     else:
-        warn("ionq.simulator unavailable or queue time >= 60s: not submitting")
+        raise ValueError(
+            "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
+        )
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -52,19 +62,148 @@ def test_quantinuum_sim_h11e(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        warn("quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting")
+        raise ValueError(
+            "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
+        )
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize("azure_backend", ["quantinuum.sim.h1-1sc"], indirect=True)
+def test_quantinuum_sim_h11e_two_regs(azure_backend: AzureBackend) -> None:
+    c = Circuit(2, name="test_classical")
+    a = c.add_c_register("a", 10)
+    b = c.add_c_register("b", 11)
+
+    c.Measure(Qubit(0), a[0])
+    c.Measure(Qubit(1), b[0])
+
+    b = azure_backend
+    c1 = b.get_compiled_circuit(c)
+    if b.is_available() and b.average_queue_time_s() < 60:
+        h = b.process_circuit(c1, n_shots=1000)
+        r = b.get_result(h, timeout=120)
+        counts = r.get_counts()
+        assert sum(counts.values()) == 1000
+    else:
+        raise ValueError(
+            "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
+        )
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize("azure_backend", ["quantinuum.sim.h1-1sc"], indirect=True)
+def test_quantinuum_sim_h11e_complex(azure_backend: AzureBackend) -> None:
+    c = Circuit(1, name="test_classical")
+    a = c.add_c_register("a", 10)
+    b = c.add_c_register("b", 11)
+    d = c.add_c_register("d", 20)
+
+    c.Measure(Qubit(0), a[0])
+
+    c.add_c_setbits([True, True] + [False] * 9, list(b))
+
+    c.add_classicalexpbox_register(a + b, d)  # type: ignore
+    b = azure_backend
+    c1 = b.get_compiled_circuit(c)
+    if b.is_available() and b.average_queue_time_s() < 60:
+        h = b.process_circuit(c1, n_shots=1000)
+        r = b.get_result(h, timeout=120)
+        counts = r.get_counts()
+        assert sum(counts.values()) == 1000
+    else:
+        raise ValueError(
+            "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
+        )
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize("azure_backend", ["quantinuum.sim.h1-1sc"], indirect=True)
+def test_quantinuum_sim_h11e_cond(azure_backend: AzureBackend) -> None:
+    c = Circuit(1, name="test_classical")
+    a = c.add_c_register("a", 32)
+    b = c.add_c_register("b", 32)
+    d = c.add_c_register("d", 32)
+
+    c.Measure(Qubit(0), a[0])
+
+    c.add_c_setreg(23, b)
+
+    c.add_classicalexpbox_register(a + b, d)  # type: ignore
+
+    c.X(0, condition=a[0])
+    c.Measure(Qubit(0), b[4])
+
+    b = azure_backend
+    c1 = b.get_compiled_circuit(c)
+    if b.is_available() and b.average_queue_time_s() < 60:
+        h = b.process_circuit(c1, n_shots=1000)
+        r = b.get_result(h, timeout=120)
+        counts = r.get_counts()
+        assert sum(counts.values()) == 1000
+    else:
+        raise ValueError(
+            "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
+        )
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize("azure_backend", ["quantinuum.sim.h1-1sc"], indirect=True)
+def test_quantinuum_sim_h11e_cond_2(azure_backend: AzureBackend) -> None:
+    c = Circuit(1, name="test_classical")
+    a = c.add_c_register("a", 32)
+    b = c.add_c_register("b", 32)
+    d = c.add_c_register("d", 32)
+
+    c.Measure(Qubit(0), a[0])
+
+    c.add_c_setreg(23, b)
+
+    c.add_classicalexpbox_register(a + b, d)  # type: ignore
+    c.add_classicalexpbox_register(a - b, d)  # type: ignore
+    c.add_classicalexpbox_register(a << 1, a)  # type: ignore
+    c.add_classicalexpbox_register(a >> 1, b)  # type: ignore
+
+    c.X(0, condition=reg_eq(a ^ b, 1))
+    c.X(0, condition=(a[0] ^ b[0]))
+    c.X(0, condition=reg_eq(a & b, 1))
+    c.X(0, condition=reg_eq(a | b, 1))
+
+    c.X(0, condition=a[0])
+    c.Measure(Qubit(0), b[4])
+
+    c.X(0, condition=reg_neq(a, 1))
+    c.X(0, condition=if_not_bit(a[0]))
+    c.X(0, condition=reg_gt(a, 1))
+    c.X(0, condition=reg_lt(a, 1))
+    c.X(0, condition=reg_geq(a, 1))
+    c.X(0, condition=reg_leq(a, 1))
+    c.Measure(Qubit(0), b[4])
+    b = azure_backend
+    c1 = b.get_compiled_circuit(c)
+    if b.is_available() and b.average_queue_time_s() < 60:
+        h = b.process_circuit(c1, n_shots=1000)
+        r = b.get_result(h, timeout=120)
+        counts = r.get_counts()
+        assert sum(counts.values()) == 1000
+    else:
+        raise ValueError(
+            "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
+        )
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize("azure_backend", ["quantinuum.sim.h1-1e"], indirect=True)
 def test_quantinuum_option_params(azure_backend: AzureBackend) -> None:
-    c = Circuit(2).H(0).CX(0, 1).measure_all()
+    c = Circuit(2, 2).H(0).CX(0, 1).measure_all()
     b = azure_backend
     c1 = b.get_compiled_circuit(c)
-    if b.is_available() and b.average_queue_time_s() < 600:
+    if b.is_available() and b.average_queue_time_s() < 60:
         h = b.process_circuit(c1, n_shots=1000, option_params={"error_model": False})  # type: ignore
         r = b.get_result(h, timeout=1200)
         counts = r.get_counts()
-        assert all(x0 == x1 for x0, x1 in counts)
+        assert all(x[0] == x[1] for x in counts)
+        assert any(x[0] == 1 for x in counts)
     else:
-        warn("quantinuum.sim.h1-1e unavailable or queue time >= 600s: not submitting")
+        raise ValueError(
+            "quantinuum.sim.h1-1e unavailable or queue time >= 60s: not submitting"
+        )
