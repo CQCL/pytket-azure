@@ -77,11 +77,11 @@ def test_quantinuum_sim_h11e_two_regs(azure_backend: AzureBackend) -> None:
     c.Measure(Qubit(0), a[0])
     c.Measure(Qubit(1), b[0])
 
-    b = azure_backend
-    c1 = b.get_compiled_circuit(c)
-    if b.is_available() and b.average_queue_time_s() < 60:
-        h = b.process_circuit(c1, n_shots=1000)
-        r = b.get_result(h, timeout=120)
+    a_b = azure_backend
+    c1 = a_b.get_compiled_circuit(c)
+    if a_b.is_available() and a_b.average_queue_time_s() < 60:
+        h = a_b.process_circuit(c1, n_shots=1000)
+        r = a_b.get_result(h, timeout=120)
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
@@ -103,11 +103,11 @@ def test_quantinuum_sim_h11e_complex(azure_backend: AzureBackend) -> None:
     c.add_c_setbits([True, True] + [False] * 9, list(b))
 
     c.add_classicalexpbox_register(a + b, d)  # type: ignore
-    b = azure_backend
-    c1 = b.get_compiled_circuit(c)
-    if b.is_available() and b.average_queue_time_s() < 60:
-        h = b.process_circuit(c1, n_shots=1000)
-        r = b.get_result(h, timeout=120)
+    a_b = azure_backend
+    c1 = a_b.get_compiled_circuit(c)
+    if a_b.is_available() and a_b.average_queue_time_s() < 60:
+        h = a_b.process_circuit(c1, n_shots=1000)
+        r = a_b.get_result(h, timeout=120)
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
@@ -133,11 +133,11 @@ def test_quantinuum_sim_h11e_cond(azure_backend: AzureBackend) -> None:
     c.X(0, condition=a[0])
     c.Measure(Qubit(0), b[4])
 
-    b = azure_backend
-    c1 = b.get_compiled_circuit(c)
-    if b.is_available() and b.average_queue_time_s() < 60:
-        h = b.process_circuit(c1, n_shots=1000)
-        r = b.get_result(h, timeout=120)
+    a_b = azure_backend
+    c1 = a_b.get_compiled_circuit(c)
+    if a_b.is_available() and a_b.average_queue_time_s() < 60:
+        h = a_b.process_circuit(c1, n_shots=1000)
+        r = a_b.get_result(h, timeout=120)
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
@@ -178,11 +178,11 @@ def test_quantinuum_sim_h11e_cond_2(azure_backend: AzureBackend) -> None:
     c.X(0, condition=reg_geq(a, 1))
     c.X(0, condition=reg_leq(a, 1))
     c.Measure(Qubit(0), b[4])
-    b = azure_backend
-    c1 = b.get_compiled_circuit(c)
-    if b.is_available() and b.average_queue_time_s() < 60:
-        h = b.process_circuit(c1, n_shots=1000)
-        r = b.get_result(h, timeout=120)
+    a_b = azure_backend
+    c1 = a_b.get_compiled_circuit(c)
+    if a_b.is_available() and a_b.average_queue_time_s() < 60:
+        h = a_b.process_circuit(c1, n_shots=1000)
+        r = a_b.get_result(h, timeout=120)
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
@@ -195,11 +195,11 @@ def test_quantinuum_sim_h11e_cond_2(azure_backend: AzureBackend) -> None:
 @pytest.mark.parametrize("azure_backend", ["quantinuum.sim.h1-1e"], indirect=True)
 def test_quantinuum_option_params(azure_backend: AzureBackend) -> None:
     c = Circuit(2, 2).H(0).CX(0, 1).measure_all()
-    b = azure_backend
-    c1 = b.get_compiled_circuit(c)
-    if b.is_available() and b.average_queue_time_s() < 600:
-        h = b.process_circuit(c1, n_shots=1000, option_params={"error_model": False})  # type: ignore
-        r = b.get_result(h, timeout=1200)
+    a_b = azure_backend
+    c1 = a_b.get_compiled_circuit(c)
+    if a_b.is_available() and a_b.average_queue_time_s() < 600:
+        h = a_b.process_circuit(c1, n_shots=1000, option_params={"error_model": False})  # type: ignore
+        r = a_b.get_result(h, timeout=1200)
         counts = r.get_counts()
         assert all(x[0] == x[1] for x in counts)
         assert any(x[0] == 1 for x in counts)
