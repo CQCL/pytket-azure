@@ -204,7 +204,10 @@ class AzureBackend(Backend):
                 "count": n_shots,
             }
 
-            if self._backendinfo.device_name[:11] == "quantinuum.":
+            if (
+                self._backendinfo.device_name
+                and self._backendinfo.device_name[:11] == "quantinuum."
+            ):
 
                 module_bitcode = pytket_to_qir(
                     c,
@@ -254,7 +257,10 @@ class AzureBackend(Backend):
     ) -> BackendResult:
         n_shots = job.details.input_params["count"]
         counts: Counter[OutcomeArray] = Counter()
-        if self._backendinfo.device_name[:11] == "quantinuum.":
+        if (
+            self._backendinfo.device_name
+            and self._backendinfo.device_name[:11] == "quantinuum."
+        ):
             for s, p in results.items():
                 outcome = literal_eval(s)
                 n = int(n_shots * p + 0.5)

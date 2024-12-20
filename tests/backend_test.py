@@ -45,7 +45,7 @@ def test_ionq_simulator(azure_backend: AzureBackend) -> None:
         assert counts == Counter({(0, 0): 5, (1, 1): 5})
     else:
         raise ValueError(
-            "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
+            "ionq.simulator unavailable or queue time >= 60s: not submitting"
         )
 
 
@@ -196,7 +196,7 @@ def test_quantinuum_option_params(azure_backend: AzureBackend) -> None:
     c = Circuit(2, 2).H(0).CX(0, 1).measure_all()
     a_b = azure_backend
     c1 = a_b.get_compiled_circuit(c)
-    if a_b.is_available() and a_b.average_queue_time_s() < 6000:
+    if a_b.is_available() and a_b.average_queue_time_s() < 600:
         h = a_b.process_circuit(c1, n_shots=1000, option_params={"error_model": False})  # type: ignore
         r = a_b.get_result(h, timeout=1200)
         counts = r.get_counts()
