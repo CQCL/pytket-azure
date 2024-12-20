@@ -197,27 +197,29 @@ class AzureBackend(Backend):
 
         handles = []
         for i, (c, n_shots) in enumerate(zip(circuits, n_shots_list)):
+
             input_params = {
                 "entryPoint": "main",
                 "arguments": [],
                 "count": n_shots,
             }
-            if self._backendinfo.device_name == "ionq.simulator":
-                module_bitcode = pytket_to_qir(
-                    c,
-                    qir_format=QIRFormat.BINARY,
-                    int_type=64,
-                    cut_pytket_register=False,
-                    profile=QIRProfile.AZUREBASE,
-                )
-                raise ValueError("ionq devices currently not supported")
-            else:
+
+            if self._backendinfo.device_name[:11] == "quantinuum.":
+
                 module_bitcode = pytket_to_qir(
                     c,
                     qir_format=QIRFormat.BINARY,
                     int_type=64,
                     cut_pytket_register=False,
                     profile=QIRProfile.AZUREADAPTIVE,
+                )
+            else:
+                module_bitcode = pytket_to_qir(
+                    c,
+                    qir_format=QIRFormat.BINARY,
+                    int_type=64,
+                    cut_pytket_register=False,
+                    profile=QIRProfile.AZUREBASE,
                 )
 
             if option_params is not None:
@@ -252,22 +254,32 @@ class AzureBackend(Backend):
     ) -> BackendResult:
         n_shots = job.details.input_params["count"]
         counts: Counter[OutcomeArray] = Counter()
-        for s, p in results.items():
-            outcome = literal_eval(s)
-            n = int(n_shots * p + 0.5)
-            assert len(outcome) == len(self._result_c_regs[handle])
-            list_bits: list = []
-            for res, creg in zip(outcome, self._result_c_regs[handle]):
-                long_res = bin(int(res)).replace(
-                    "0b",
-                    "0000000000000000000000000000000000000\
+        if self._backendinfo.device_name[:11] == "quantinuum.":
+            for s, p in results.items():
+                outcome = literal_eval(s)
+                n = int(n_shots * p + 0.5)
+                assert len(outcome) == len(self._result_c_regs[handle])
+                list_bits: list = []
+                for res, creg in zip(outcome, self._result_c_regs[handle]):
+                    long_res = bin(int(res)).replace(
+                        "0b",
+                        "0000000000000000000000000000000000000\
 00000000000000000000000000",  # 0 * 63
-                )
-                list_bits.append(long_res[len(long_res) - creg.size : len(long_res)])
-            all_bits = "".join(list_bits)
+                    )
+                    list_bits.append(
+                        long_res[len(long_res) - creg.size : len(long_res)]
+                    )
+                all_bits = "".join(list_bits)
 
-            counts[OutcomeArray.from_readouts([[int(x) for x in list(all_bits)]])] = n
-        return BackendResult(counts=counts, c_bits=self._result_bits[handle])
+                counts[OutcomeArray.from_readouts([[int(x) for x in all_bits]])] = n
+            return BackendResult(counts=counts, c_bits=self._result_bits[handle])
+        else:
+            for s, p in results.items():
+                outcome = literal_eval(s)
+                n = int(n_shots * p + 0.5)
+                oa = OutcomeArray.from_readouts([outcome])
+                counts[oa] = n
+            return BackendResult(counts=counts)
 
     def circuit_status(self, handle) -> CircuitStatus:
         job = self._jobs[handle]

@@ -33,7 +33,6 @@ REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires Azure credentials)"
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-@pytest.mark.skip(reason="resulthandling currently not supported for ionq")
 @pytest.mark.parametrize("azure_backend", ["ionq.simulator"], indirect=True)
 def test_ionq_simulator(azure_backend: AzureBackend) -> None:
     c = Circuit(2).H(0).CX(0, 1).measure_all()
@@ -197,12 +196,12 @@ def test_quantinuum_option_params(azure_backend: AzureBackend) -> None:
     c = Circuit(2, 2).H(0).CX(0, 1).measure_all()
     a_b = azure_backend
     c1 = a_b.get_compiled_circuit(c)
-    if a_b.is_available() and a_b.average_queue_time_s() < 600:
+    if a_b.is_available() and a_b.average_queue_time_s() < 6000:
         h = a_b.process_circuit(c1, n_shots=1000, option_params={"error_model": False})  # type: ignore
         r = a_b.get_result(h, timeout=1200)
         counts = r.get_counts()
         assert all(x[0] == x[1] for x in counts)
-        assert any(x[0] == 1 for x in counts)
+        assert any(x[0] == 1 for x in counts)  # might fail in very rare cases
     else:
         raise ValueError(
             "quantinuum.sim.h1-1e unavailable or queue time >= 600s: not submitting"
