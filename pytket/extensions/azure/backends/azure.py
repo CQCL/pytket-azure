@@ -266,7 +266,7 @@ class AzureBackend(Backend):
                 list_bits.append(long_res[len(long_res) - creg.size : len(long_res)])
             all_bits = "".join(list_bits)
 
-            counts[OutcomeArray.from_readouts([[int(x) for x in list(all_bits)]])] = n
+            counts[OutcomeArray.from_readouts([[int(x) for x in all_bits]])] = n
         return BackendResult(counts=counts, c_bits=self._result_bits[handle])
 
     def circuit_status(self, handle) -> CircuitStatus:
