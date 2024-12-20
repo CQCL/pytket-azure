@@ -19,8 +19,6 @@ from collections.abc import Sequence
 from functools import cache
 from typing import Any, Optional, Union, cast
 
-from qiskit_qir import to_qir_module
-
 from azure.quantum import Job, Workspace
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes
@@ -30,9 +28,9 @@ from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.circuit import Circuit, OpType
 from pytket.extensions.azure._metadata import __extension_version__
-from pytket.extensions.qiskit import tk_to_qiskit
 from pytket.passes import AutoRebase, BasePass
 from pytket.predicates import GateSetPredicate, Predicate
+from pytket.qir import QIRFormat, QIRProfile, pytket_to_qir
 from pytket.utils import OutcomeArray
 
 from .config import AzureConfig
@@ -76,6 +74,26 @@ _GATE_SET = {
     OpType.Y,
     OpType.Z,
 }
+
+
+_ADDITIONAL_GATES = {
+    OpType.Reset,
+    OpType.Measure,
+    OpType.Barrier,
+    OpType.RangePredicate,
+    OpType.MultiBit,
+    OpType.ExplicitPredicate,
+    OpType.ExplicitModifier,
+    OpType.SetBits,
+    OpType.CopyBits,
+    OpType.ClassicalExpBox,
+    OpType.ClExpr,
+    OpType.WASM,
+}
+
+
+_ALL_GATES = _ADDITIONAL_GATES.copy()
+_ALL_GATES.update(_GATE_SET)
 
 
 class AzureBackend(Backend):
@@ -129,6 +147,8 @@ class AzureBackend(Backend):
         )
         _persistent_handles = False
         self._jobs: dict[ResultHandle, Job] = {}
+        self._result_bits: dict[ResultHandle, list] = {}
+        self._result_c_regs: dict[ResultHandle, list] = {}
 
     @property
     def backend_info(self) -> BackendInfo:
@@ -136,7 +156,7 @@ class AzureBackend(Backend):
 
     @property
     def required_predicates(self) -> list[Predicate]:
-        return [GateSetPredicate(_GATE_SET)]
+        return [GateSetPredicate(_ALL_GATES)]
 
     def rebase_pass(self) -> BasePass:
         return AutoRebase(gateset=_GATE_SET)
@@ -177,18 +197,38 @@ class AzureBackend(Backend):
 
         handles = []
         for i, (c, n_shots) in enumerate(zip(circuits, n_shots_list)):
-            qkc = tk_to_qiskit(c)
-            module, entry_points = to_qir_module(qkc)
-            assert len(entry_points) == 1
+
             input_params = {
-                "entryPoint": entry_points[0],
+                "entryPoint": "main",
                 "arguments": [],
                 "count": n_shots,
             }
+
+            if (
+                self._backendinfo.device_name
+                and self._backendinfo.device_name[:11] == "quantinuum."
+            ):
+
+                module_bitcode = pytket_to_qir(
+                    c,
+                    qir_format=QIRFormat.BINARY,
+                    int_type=64,
+                    cut_pytket_register=False,
+                    profile=QIRProfile.AZUREADAPTIVE,
+                )
+            else:
+                module_bitcode = pytket_to_qir(
+                    c,
+                    qir_format=QIRFormat.BINARY,
+                    int_type=64,
+                    cut_pytket_register=False,
+                    profile=QIRProfile.AZUREBASE,
+                )
+
             if option_params is not None:
                 input_params.update(option_params)  # type: ignore
             job = self._target.submit(
-                input_data=module.bitcode,
+                input_data=module_bitcode,
                 input_data_format="qir.v1",
                 output_data_format="microsoft.quantum-results.v1",
                 name=f"job_{i}",
@@ -198,6 +238,8 @@ class AzureBackend(Backend):
             handle = ResultHandle(jobid)
             handles.append(handle)
             self._jobs[handle] = job
+            self._result_bits[handle] = c.bits
+            self._result_c_regs[handle] = c.c_registers
         for handle in handles:
             self._cache[handle] = dict()
         return handles
@@ -210,15 +252,38 @@ class AzureBackend(Backend):
         else:
             self._cache[handle] = result_dict
 
-    def _make_backend_result(self, results: Any, job: Job) -> BackendResult:
+    def _make_backend_result(
+        self, results: Any, job: Job, handle: ResultHandle
+    ) -> BackendResult:
         n_shots = job.details.input_params["count"]
         counts: Counter[OutcomeArray] = Counter()
-        for s, p in results.items():
-            outcome = literal_eval(s)
-            n = int(n_shots * p + 0.5)
-            oa = OutcomeArray.from_readouts([outcome])
-            counts[oa] = n
-        return BackendResult(counts=counts)
+        if (
+            self._backendinfo.device_name
+            and self._backendinfo.device_name[:11] == "quantinuum."
+        ):
+            for s, p in results.items():
+                outcome = literal_eval(s)
+                n = int(n_shots * p + 0.5)
+                assert len(outcome) == len(self._result_c_regs[handle])
+                list_bits: list = []
+                for res, creg in zip(outcome, self._result_c_regs[handle]):
+                    long_res = bin(int(res)).replace(
+                        "0b",
+                        "0000000000000000000000000000000000000\
+00000000000000000000000000",  # 0 * 63
+                    )
+                    list_bits.append(long_res[-creg.size :])
+                all_bits = "".join(list_bits)
+
+                counts[OutcomeArray.from_readouts([[int(x) for x in all_bits]])] = n
+            return BackendResult(counts=counts, c_bits=self._result_bits[handle])
+        else:
+            for s, p in results.items():
+                outcome = literal_eval(s)
+                n = int(n_shots * p + 0.5)
+                oa = OutcomeArray.from_readouts([outcome])
+                counts[oa] = n
+            return BackendResult(counts=counts)
 
     def circuit_status(self, handle) -> CircuitStatus:
         job = self._jobs[handle]
@@ -228,7 +293,7 @@ class AzureBackend(Backend):
             results = job.get_results()
             self._update_cache_result(
                 handle,
-                {"result": self._make_backend_result(results, job)},
+                {"result": self._make_backend_result(results, job, handle)},
             )
             return CircuitStatus(StatusEnum.COMPLETED)
         elif status == "Waiting":

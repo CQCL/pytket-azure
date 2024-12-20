@@ -56,9 +56,8 @@ setup(
     include_package_data=True,
     install_requires=[
         "azure-quantum >= 2.2.0",
-        "pytket >= 1.34.0",
-        "pytket-qiskit >= 0.58.0",
-        "qiskit-qir >= 0.5.0",
+        "pytket >= 1.37.0",
+        "pytket-qir >= 0.19.0",
     ],
     classifiers=[
         "Environment :: Console",
