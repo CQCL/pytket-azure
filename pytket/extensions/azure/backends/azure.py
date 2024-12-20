@@ -273,7 +273,7 @@ class AzureBackend(Backend):
 00000000000000000000000000",  # 0 * 63
                     )
                     list_bits.append(
-                        long_res[len(long_res) - creg.size : len(long_res)]
+                        long_res[-creg.size:]
                     )
                 all_bits = "".join(list_bits)
 
