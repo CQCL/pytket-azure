@@ -18,6 +18,7 @@ from collections import Counter
 import pytest
 
 from pytket.circuit import Circuit, Qubit, if_not_bit
+from pytket.circuit.clexpr import ClExpr, ClOp, ClRegVar, WiredClExpr
 from pytket.circuit.logic_exp import (
     reg_eq,
     reg_geq,
@@ -101,7 +102,14 @@ def test_quantinuum_sim_h11e_complex(azure_backend: AzureBackend) -> None:
 
     c.add_c_setbits([True, True] + [False] * 9, list(b))
 
-    c.add_classicalexpbox_register(a + b, d)  # type: ignore
+    c.add_clexpr(
+        expr=WiredClExpr(
+            expr=ClExpr(op=ClOp.RegAdd, args=[ClRegVar(0), ClRegVar(1)]),
+            reg_posn={0: list(range(10)), 1: list(range(10, 21))},
+            output_posn=list(range(21, 41)),
+        ),
+        args=a.to_list() + b.to_list() + d.to_list(),
+    )
     a_b = azure_backend
     c1 = a_b.get_compiled_circuit(c)
     if a_b.is_available() and a_b.average_queue_time_s() < 60:
@@ -127,7 +135,14 @@ def test_quantinuum_sim_h11e_cond(azure_backend: AzureBackend) -> None:
 
     c.add_c_setreg(23, b)
 
-    c.add_classicalexpbox_register(a + b, d)  # type: ignore
+    c.add_clexpr(
+        expr=WiredClExpr(
+            expr=ClExpr(op=ClOp.RegAdd, args=[ClRegVar(0), ClRegVar(1)]),
+            reg_posn={0: list(range(32)), 1: list(range(32, 64))},
+            output_posn=list(range(64, 96)),
+        ),
+        args=a.to_list() + b.to_list() + d.to_list(),
+    )
 
     c.X(0, condition=a[0])
     c.Measure(Qubit(0), b[4])
@@ -157,10 +172,38 @@ def test_quantinuum_sim_h11e_cond_2(azure_backend: AzureBackend) -> None:
 
     c.add_c_setreg(23, b)
 
-    c.add_classicalexpbox_register(a + b, d)  # type: ignore
-    c.add_classicalexpbox_register(a - b, d)  # type: ignore
-    c.add_classicalexpbox_register(a << 1, a)  # type: ignore
-    c.add_classicalexpbox_register(a >> 1, b)  # type: ignore
+    c.add_clexpr(
+        expr=WiredClExpr(
+            expr=ClExpr(op=ClOp.RegAdd, args=[ClRegVar(0), ClRegVar(1)]),
+            reg_posn={0: list(range(32)), 1: list(range(32, 64))},
+            output_posn=list(range(64, 96)),
+        ),
+        args=a.to_list() + b.to_list() + d.to_list(),
+    )
+    c.add_clexpr(
+        expr=WiredClExpr(
+            expr=ClExpr(op=ClOp.RegSub, args=[ClRegVar(0), ClRegVar(1)]),
+            reg_posn={0: list(range(32)), 1: list(range(32, 64))},
+            output_posn=list(range(64, 96)),
+        ),
+        args=a.to_list() + b.to_list() + d.to_list(),
+    )
+    c.add_clexpr(
+        expr=WiredClExpr(
+            expr=ClExpr(op=ClOp.RegLsh, args=[ClRegVar(0), 1]),
+            reg_posn={0: list(range(32))},
+            output_posn=list(range(32)),
+        ),
+        args=a.to_list(),
+    )
+    c.add_clexpr(
+        expr=WiredClExpr(
+            expr=ClExpr(op=ClOp.RegRsh, args=[ClRegVar(0), 1]),
+            reg_posn={0: list(range(32))},
+            output_posn=list(range(32, 64)),
+        ),
+        args=a.to_list() + b.to_list(),
+    )
 
     c.X(0, condition=reg_eq(a ^ b, 1))
     c.X(0, condition=(a[0] ^ b[0]))
