@@ -14,7 +14,7 @@ set -evu
 # WARNING: running this locally will delete any local files that
 # aren't strictly part of the git tree, including gitignored files!
 
-MODULE=pytket-iqm
+MODULE=pytket-azure
 
 MYPY=$1
 
