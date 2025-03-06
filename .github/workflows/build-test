@@ -54,7 +54,7 @@ python -m pip install --pre -r test-requirements.txt
 # Update the pytket version to the lastest (pre) release. But don't bump the
 # major version.
 python -m pip install importlib_metadata
-python -m pip install --upgrade --pre pytket "pytket<`python -c \"from importlib_metadata import version; print(int(version('pytket').split('.')[0])+1)\"`"
+python -m pip install --upgrade --pre "pytket<`python -c \"from importlib_metadata import version; print(int(version('pytket').split('.')[0])+1)\"`"
 
 pytest --doctest-modules
 
