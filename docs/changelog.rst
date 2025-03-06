@@ -6,8 +6,8 @@ Changelog
 0.4.0 (unreleased)
 ------------------
 
-* Updated pytket version requirement to 1.39.
-* Update minimum pytket-qir version to 0.19.0.
+* Update pytket minimium version requirement to 2.0.1.
+* Update minimum pytket-qir version to 0.21.1.
 * Use pytket-qir for the QIR generation
 * remove qiskit-qir and pytket-qiskit as dependencies
 
