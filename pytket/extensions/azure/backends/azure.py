@@ -197,23 +197,13 @@ class AzureBackend(Backend):
 
         self._device_type = DeviceType.Default
 
-        if (
-            self._backendinfo.device_name
-            and self._backendinfo.device_name[:11] == "quantinuum."
-        ):
-            self._device_type = DeviceType.Quantinuum
-
-        if (
-            self._backendinfo.device_name
-            and self._backendinfo.device_name[:5] == "ionq."
-        ):
-            self._device_type = DeviceType.Ionq
-
-        if (
-            self._backendinfo.device_name
-            and self._backendinfo.device_name[:8] == "rigetti."
-        ):
-            self._device_type = DeviceType.Rigetti
+        if self._backendinfo.device_name:
+            if self._backendinfo.device_name[:11] == "quantinuum.":
+                self._device_type = DeviceType.Quantinuum
+            elif self._backendinfo.device_name[:5] == "ionq.":
+                self._device_type = DeviceType.Ionq
+            elif self._backendinfo.device_name[:8] == "rigetti.":
+                self._device_type = DeviceType.Rigetti
 
     @property
     def backend_info(self) -> BackendInfo:
