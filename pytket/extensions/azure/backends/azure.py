@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import os
+import warnings
 from ast import literal_eval
 from collections import Counter
 from collections.abc import Sequence
@@ -204,6 +204,8 @@ class AzureBackend(Backend):
                 self._device_type = DeviceType.Ionq
             elif self._backendinfo.device_name[:8] == "rigetti.":
                 self._device_type = DeviceType.Rigetti
+            else:
+                warnings.warn("Unknown device type used, using default compilation")
 
     @property
     def backend_info(self) -> BackendInfo:
