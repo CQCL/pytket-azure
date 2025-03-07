@@ -205,7 +205,12 @@ class AzureBackend(Backend):
             elif self._backendinfo.device_name[:8] == "rigetti.":
                 self._device_type = DeviceType.Rigetti
             else:
-                warnings.warn("Unknown device type used, using default compilation")
+                warnings.warn(
+                    f"Unknown device type for {self._backendinfo.device_name},\
+using default compilation"
+                )
+        else:
+            warnings.warn("Unknown device type, using default compilation")
 
     @property
     def backend_info(self) -> BackendInfo:
