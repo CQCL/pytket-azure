@@ -16,6 +16,7 @@ import os
 from ast import literal_eval
 from collections import Counter
 from collections.abc import Sequence
+from enum import Enum
 from functools import cache
 from typing import Any, Optional, Union, cast
 
@@ -55,6 +56,15 @@ from pytket.qir import QIRFormat, QIRProfile, pytket_to_qir
 from pytket.utils import OutcomeArray
 
 from .config import AzureConfig
+
+
+class DeviceType(Enum):
+    """Different types of devices"""
+
+    Quantinuum = 0
+    Ionq = 1
+    Rigetti = 2
+    Default = 3
 
 
 def _get_workspace(
@@ -185,6 +195,26 @@ class AzureBackend(Backend):
         self._result_bits: dict[ResultHandle, list] = {}
         self._result_c_regs: dict[ResultHandle, list] = {}
 
+        self._device_type = DeviceType.Default
+
+        if (
+            self._backendinfo.device_name
+            and self._backendinfo.device_name[:11] == "quantinuum."
+        ):
+            self._device_type = DeviceType.Quantinuum
+
+        if (
+            self._backendinfo.device_name
+            and self._backendinfo.device_name[:5] == "ionq."
+        ):
+            self._device_type = DeviceType.Ionq
+
+        if (
+            self._backendinfo.device_name
+            and self._backendinfo.device_name[:8] == "rigetti."
+        ):
+            self._device_type = DeviceType.Rigetti
+
     @property
     def backend_info(self) -> BackendInfo:
         return self._backendinfo
@@ -197,10 +227,7 @@ class AzureBackend(Backend):
         return OpType.ZZPhase
 
     def rebase_pass(self) -> BasePass:
-        if (
-            self._backendinfo.device_name
-            and self._backendinfo.device_name[:11] == "quantinuum."
-        ):
+        if self._device_type == DeviceType.Quantinuum:
             return AutoRebase(
                 _QUANTINUUM_TARGET_GATESET,
                 allow_swaps=True,
@@ -223,10 +250,7 @@ class AzureBackend(Backend):
         """
         assert optimisation_level in range(4)
 
-        if (
-            self._backendinfo.device_name
-            and self._backendinfo.device_name[:5] == "ionq."
-        ):
+        if self._device_type != DeviceType.Quantinuum:
             return self.rebase_pass()
 
         passlist = [
@@ -365,10 +389,7 @@ class AzureBackend(Backend):
                 "count": n_shots,
             }
 
-            if (
-                self._backendinfo.device_name
-                and self._backendinfo.device_name[:11] == "quantinuum."
-            ):
+            if self._device_type == DeviceType.Quantinuum:
 
                 module_bitcode = pytket_to_qir(
                     c,
@@ -418,10 +439,7 @@ class AzureBackend(Backend):
     ) -> BackendResult:
         n_shots = job.details.input_params["count"]
         counts: Counter[OutcomeArray] = Counter()
-        if (
-            self._backendinfo.device_name
-            and self._backendinfo.device_name[:11] == "quantinuum."
-        ):
+        if self._device_type == DeviceType.Quantinuum:
             for s, p in results.items():
                 outcome = literal_eval(s)
                 n = int(n_shots * p + 0.5)
