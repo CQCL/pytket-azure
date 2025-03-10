@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import os
+import warnings
 from ast import literal_eval
 from collections import Counter
 from collections.abc import Sequence
+from enum import Enum
 from functools import cache
 from typing import Any, Optional, Union, cast
 
@@ -28,12 +29,42 @@ from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.circuit import Circuit, OpType
 from pytket.extensions.azure._metadata import __extension_version__
-from pytket.passes import AutoRebase, BasePass
-from pytket.predicates import GateSetPredicate, Predicate
+from pytket.passes import (
+    AutoRebase,
+    AutoSquash,
+    BasePass,
+    DecomposeBoxes,
+    DecomposeTK2,
+    FlattenRelabelRegistersPass,
+    FullPeepholeOptimise,
+    GreedyPauliSimp,
+    NormaliseTK2,
+    RemoveBarriers,
+    RemovePhaseOps,
+    RemoveRedundancies,
+    SequencePass,
+    SynthesiseTK,
+    ZZPhaseToRz,
+    scratch_reg_resize_pass,
+)
+from pytket.predicates import (
+    GateSetPredicate,
+    NoSymbolsPredicate,
+    Predicate,
+)
 from pytket.qir import QIRFormat, QIRProfile, pytket_to_qir
 from pytket.utils import OutcomeArray
 
 from .config import AzureConfig
+
+
+class DeviceType(Enum):
+    """Different types of devices"""
+
+    Quantinuum = 0
+    Ionq = 1
+    Rigetti = 2
+    Default = 3
 
 
 def _get_workspace(
@@ -59,9 +90,9 @@ def _get_workspace(
 
 _GATE_SET = {
     OpType.CX,
+    OpType.CY,
     OpType.CZ,
     OpType.H,
-    OpType.Measure,
     OpType.Rx,
     OpType.Ry,
     OpType.Rz,
@@ -73,6 +104,7 @@ _GATE_SET = {
     OpType.X,
     OpType.Y,
     OpType.Z,
+    OpType.ZZPhase,
 }
 
 
@@ -87,9 +119,23 @@ _ADDITIONAL_GATES = {
     OpType.SetBits,
     OpType.CopyBits,
     OpType.ClExpr,
-    OpType.WASM,
 }
 
+
+_QUANTINUUM_TARGET_GATESET = {
+    OpType.ZZPhase,  # 2 qubit gate
+    OpType.Z,
+    OpType.X,
+    OpType.Y,
+    OpType.S,
+    OpType.Sdg,
+    OpType.H,
+    OpType.Rz,
+    OpType.Rx,
+    OpType.Ry,
+    OpType.T,
+    OpType.Tdg,
+}
 
 _ALL_GATES = _ADDITIONAL_GATES.copy()
 _ALL_GATES.update(_GATE_SET)
@@ -149,19 +195,156 @@ class AzureBackend(Backend):
         self._result_bits: dict[ResultHandle, list] = {}
         self._result_c_regs: dict[ResultHandle, list] = {}
 
+        self._device_type = DeviceType.Default
+
+        if self._backendinfo.device_name:
+            if self._backendinfo.device_name[:11] == "quantinuum.":
+                self._device_type = DeviceType.Quantinuum
+            elif self._backendinfo.device_name[:5] == "ionq.":
+                self._device_type = DeviceType.Ionq
+            elif self._backendinfo.device_name[:8] == "rigetti.":
+                self._device_type = DeviceType.Rigetti
+            else:
+                warnings.warn(
+                    f"Unknown device type for {self._backendinfo.device_name},\
+using default compilation"
+                )
+        else:
+            warnings.warn("Unknown device type, using default compilation")
+
     @property
     def backend_info(self) -> BackendInfo:
         return self._backendinfo
 
     @property
     def required_predicates(self) -> list[Predicate]:
-        return [GateSetPredicate(_ALL_GATES)]
+        return [GateSetPredicate(_ALL_GATES), NoSymbolsPredicate()]
+
+    def _default_2q_gate(device_name: str) -> OpType:
+        return OpType.ZZPhase
 
     def rebase_pass(self) -> BasePass:
-        return AutoRebase(gateset=_GATE_SET)
+        if self._device_type == DeviceType.Quantinuum:
+            return AutoRebase(
+                _QUANTINUUM_TARGET_GATESET,
+                allow_swaps=True,
+            )
+        else:
+            return AutoRebase(gateset=_GATE_SET)
 
-    def default_compilation_pass(self, optimisation_level: int = 1) -> BasePass:
-        return self.rebase_pass()
+    def default_compilation_pass(
+        self, optimisation_level: int = 2, timeout: int = 300
+    ) -> BasePass:
+        """
+        :param optimisation_level: Allows values of 0, 1, 2 or 3, with higher values
+            prompting more computationally heavy optimising compilation that
+            can lead to reduced gate count in circuits.
+        :param timeout: Only valid for optimisation level 3, gives a maximimum time
+            for running a single thread of the pass `GreedyPauliSimp`. Increase for
+            optimising larger circuits.
+
+        :return: Compilation pass for compiling circuits to Quantinuum devices
+        """
+        assert optimisation_level in range(4)
+
+        if self._device_type != DeviceType.Quantinuum:
+            return self.rebase_pass()
+
+        passlist = [
+            DecomposeBoxes(),
+            scratch_reg_resize_pass(),
+        ]
+        squash = AutoSquash({OpType.Rx, OpType.Rz})
+        target_2qb_gate = OpType.ZZPhase
+        assert target_2qb_gate is not None
+        decomposition_passes = [
+            NormaliseTK2(),
+            DecomposeTK2(
+                allow_swaps=True,
+                ZZPhase_fidelity=1.0,
+            ),
+        ]
+
+        if optimisation_level == 0:
+            passlist.append(self.rebase_pass())
+        elif optimisation_level == 1:
+            passlist.append(SynthesiseTK())
+            passlist.extend(decomposition_passes)
+            passlist.extend(
+                [
+                    self.rebase_pass(),
+                    ZZPhaseToRz(),
+                    RemoveRedundancies(),
+                    squash,
+                    RemoveRedundancies(),
+                ]
+            )
+        elif optimisation_level == 2:
+            passlist.append(
+                FullPeepholeOptimise(
+                    allow_swaps=True,
+                    target_2qb_gate=OpType.TK2,
+                )
+            )
+            passlist.extend(decomposition_passes)
+            passlist.extend(
+                [
+                    self.rebase_pass(),
+                    RemoveRedundancies(),
+                    squash,
+                    RemoveRedundancies(),
+                ]
+            )
+        else:
+            passlist.extend(
+                [
+                    RemoveBarriers(),
+                    AutoRebase(
+                        {
+                            OpType.Z,
+                            OpType.X,
+                            OpType.Y,
+                            OpType.S,
+                            OpType.Sdg,
+                            OpType.V,
+                            OpType.Vdg,
+                            OpType.H,
+                            OpType.CX,
+                            OpType.CY,
+                            OpType.CZ,
+                            OpType.SWAP,
+                            OpType.Rz,
+                            OpType.Rx,
+                            OpType.Ry,
+                            OpType.T,
+                            OpType.Tdg,
+                            OpType.ZZMax,
+                            OpType.ZZPhase,
+                            OpType.XXPhase,
+                            OpType.YYPhase,
+                        }
+                    ),
+                    GreedyPauliSimp(
+                        allow_zzphase=True,
+                        only_reduce=True,
+                        thread_timeout=timeout,
+                        trials=10,
+                    ),
+                ]
+            )
+            passlist.extend(decomposition_passes)
+            passlist.extend(
+                [
+                    self.rebase_pass(),
+                    RemoveRedundancies(),
+                    squash,
+                    RemoveRedundancies(),
+                ]
+            )
+        passlist.append(RemovePhaseOps())
+
+        passlist.append(FlattenRelabelRegistersPass("q"))
+        return SequencePass(passlist)
 
     @property
     def _result_id_type(self) -> _ResultIdTuple:
@@ -203,14 +386,11 @@ class AzureBackend(Backend):
                 "count": n_shots,
             }
 
-            if (
-                self._backendinfo.device_name
-                and self._backendinfo.device_name[:11] == "quantinuum."
-            ):
+            if self._device_type == DeviceType.Quantinuum:
 
                 module_bitcode = pytket_to_qir(
                     c,
-                    qir_format=QIRFormat.BINARY,
+                    qir_format=QIRFormat.STRING,
                     int_type=64,
                     cut_pytket_register=False,
                     profile=QIRProfile.AZUREADAPTIVE,
@@ -218,7 +398,7 @@ class AzureBackend(Backend):
             else:
                 module_bitcode = pytket_to_qir(
                     c,
-                    qir_format=QIRFormat.BINARY,
+                    qir_format=QIRFormat.STRING,
                     int_type=64,
                     cut_pytket_register=False,
                     profile=QIRProfile.AZUREBASE,
@@ -256,10 +436,7 @@ class AzureBackend(Backend):
     ) -> BackendResult:
         n_shots = job.details.input_params["count"]
         counts: Counter[OutcomeArray] = Counter()
-        if (
-            self._backendinfo.device_name
-            and self._backendinfo.device_name[:11] == "quantinuum."
-        ):
+        if self._device_type == DeviceType.Quantinuum:
             for s, p in results.items():
                 outcome = literal_eval(s)
                 n = int(n_shots * p + 0.5)
@@ -323,7 +500,7 @@ class AzureBackend(Backend):
                 return cast(BackendResult, self._cache[handle]["result"])
             else:
                 assert circuit_status.status is StatusEnum.ERROR
-                raise RuntimeError("Circuit has errored.")
+                raise RuntimeError(f"Circuit has errored. {circuit_status}")
 
     def is_available(self) -> bool:
         """Availability reported by the target."""
