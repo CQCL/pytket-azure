@@ -220,7 +220,7 @@ using default compilation"
     def required_predicates(self) -> list[Predicate]:
         return [GateSetPredicate(_ALL_GATES), NoSymbolsPredicate()]
 
-    def _default_2q_gate(device_name: str) -> OpType:
+    def _default_2q_gate(self, device_name: str) -> OpType:
         return OpType.ZZPhase
 
     def rebase_pass(self) -> BasePass:
