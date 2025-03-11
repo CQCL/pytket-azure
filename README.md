@@ -74,8 +74,7 @@ with a set of style requirements (listed in `.pylintrc`). You should run
 To run the tests:
 
 1. `cd` into the `tests` directory;
-2. ensure you have installed `pytest`, `hypothesis`, and any modules listed in
-the `test-requirements.txt` file (all via `pip`);
+2. ensure you have installed `pytest` (via `pip`);
 3. run `pytest`.
 
 When adding a new feature, please add a test for it. When fixing a bug, please
