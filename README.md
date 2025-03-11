@@ -7,7 +7,7 @@
 with tket, a quantum computing toolkit and optimising compiler developed by Quantinuum.
 
 `pytket-azure` is an extension to `pytket` that allows `pytket` circuits to
-be executed on Rigetti's, Ionq's and Quantinuum's quantum devices with you azure credentials.
+be executed on Rigetti's, Ionq's and Quantinuum's quantum devices with your Azure credentials.
 
 Some useful links:
 - [API Documentation](https://docs.quantinuum.com/tket/extensions/pytket-azure/)
