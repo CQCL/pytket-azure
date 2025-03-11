@@ -6,3 +6,4 @@ docs/poetry.lock
 .venv
 .DS_Store
 docs/build
+docs/jupyter_execute
