@@ -60,8 +60,7 @@ type checker and all submissions must pass its checks. You should therefore run
 `mypy` locally on any changed files before submitting a PR. Because of the way
 extension modules embed themselves into the `pytket` namespace this is a little
 complicated, but it should be sufficient to run the script `modules/mypy-check`
-(passing as a single argument the root directory of the module to test). The
-script requires `mypy` 0.800 or above.
+(passing as a single argument the root directory of the module to test).
 
 #### Linting
 
