@@ -124,17 +124,8 @@ _ADDITIONAL_GATES = {
 
 _QUANTINUUM_TARGET_GATESET = {
     OpType.ZZPhase,  # 2 qubit gate
-    OpType.Z,
-    OpType.X,
-    OpType.Y,
-    OpType.S,
-    OpType.Sdg,
-    OpType.H,
     OpType.Rz,
     OpType.Rx,
-    OpType.Ry,
-    OpType.T,
-    OpType.Tdg,
 }
 
 _ALL_GATES = _ADDITIONAL_GATES.copy()
