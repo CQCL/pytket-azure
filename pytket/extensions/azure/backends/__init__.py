@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Quantinuum
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Backends for processing pytket circuits with Azure devices
-"""
+"""Backends for processing pytket circuits with Azure devices"""
 
 from .azure import AzureBackend
+from .config import AzureConfig, set_azure_config

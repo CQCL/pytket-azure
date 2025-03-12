@@ -14,3 +14,18 @@ and Windows. To install, run:
 .. toctree::
     api.rst
     changelog.rst
+
+
+.. toctree::
+   :caption: Example Notebooks
+
+   examples/backend-example.ipynb
+
+
+.. toctree::
+   :caption: Useful links
+
+   Issue tracker <https://github.com/CQCL/pytket-azure/issues>
+   PyPi <https://pypi.org/project/pytket-azure/>
+
+

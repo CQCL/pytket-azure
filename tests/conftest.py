@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Quantinuum
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 import pytest
 from _pytest.fixtures import SubRequest
 
@@ -22,8 +20,4 @@ from pytket.extensions.azure import AzureBackend
 
 @pytest.fixture(name="azure_backend")
 def fixture_azure_backend(request: SubRequest) -> AzureBackend:
-    return AzureBackend(
-        name=request.param,
-        resource_id=os.getenv("PYTKET_REMOTE_AZURE_RESOURCE_ID"),
-        location=os.getenv("PYTKET_REMOTE_AZURE_LOCATION"),
-    )
+    return AzureBackend(name=request.param)

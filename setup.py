@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Quantinuum
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import shutil
 import os
-from setuptools import setup, find_namespace_packages  # type: ignore
+import shutil
+
+from setuptools import find_namespace_packages, setup  # type: ignore
 
 metadata: dict = {}
 with open("_metadata.py") as fp:
@@ -24,6 +25,17 @@ shutil.copy(
     os.path.join("pytket", "extensions", "azure", "_metadata.py"),
 )
 
+long_description = """
+[Pytket](https://tket.quantinuum.com/api-docs/index.html) is a python module
+providing an extensive set of tools for compiling and executing quantum
+circuits.
+
+The `pytket-azure` extension allows `pytket` circuits to be submitted and
+executed on various devices and simulators via
+[Azure Quantum](https://learn.microsoft.com/en-us/azure/quantum/).
+
+Note that this package is still at an early, experimental stage of development.
+"""
 
 setup(
     name="pytket-azure",
@@ -37,16 +49,15 @@ setup(
         "Tracker": "https://github.com/CQCL/pytket-azure/issues",
     },
     description="Extension for pytket, providing access to Azure devices",
-    long_description=open("README.md").read(),
+    long_description=long_description,
     long_description_content_type="text/markdown",
     license="Apache 2",
     packages=find_namespace_packages(include=["pytket.*"]),
     include_package_data=True,
     install_requires=[
-        "azure-quantum >= 2.0.1",
-        "pytket >= 1.29.2",
-        "pytket-qiskit >= 0.54.1",
-        "qiskit-qir >= 0.5.0",
+        "azure-quantum >= 3.0.0",
+        "pytket >= 2.0.1",
+        "pytket-qir >= 0.21.1",
     ],
     classifiers=[
         "Environment :: Console",

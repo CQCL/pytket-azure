@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Quantinuum
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Backends for processing pytket circuits with Azure devices
-"""
+"""Backends for processing pytket circuits with Azure devices"""
 
 # _metadata.py is copied to the folder after installation.
-from ._metadata import __extension_version__, __extension_name__
-from .backends import AzureBackend
+from ._metadata import __extension_name__, __extension_version__
+from .backends import AzureBackend, AzureConfig, set_azure_config
