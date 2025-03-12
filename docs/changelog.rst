@@ -3,13 +3,14 @@
 Changelog
 ~~~~~~~~~
 
-0.4.0 (unreleased)
-------------------
+0.4.0rc0 (March 2025)
+---------------------
 
 * Update pytket minimium version requirement to 2.0.1.
 * Update minimum pytket-qir version to 0.21.1.
 * Use pytket-qir for the QIR generation
 * remove qiskit-qir and pytket-qiskit as dependencies
+* Update minimum azure-quantum version to 3.0.0.
 
 0.3.0 (October 2024)
 --------------------

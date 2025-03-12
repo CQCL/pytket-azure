@@ -55,7 +55,7 @@ setup(
     packages=find_namespace_packages(include=["pytket.*"]),
     include_package_data=True,
     install_requires=[
-        "azure-quantum >= 2.2.0",
+        "azure-quantum >= 3.0.0",
         "pytket >= 2.0.1",
         "pytket-qir >= 0.21.1",
     ],
