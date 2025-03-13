@@ -439,7 +439,8 @@ using default compilation"
                         "0000000000000000000000000000000000000\
 00000000000000000000000000",  # 0 * 63
                     )
-                    list_bits.append(long_res[-creg.size :])
+                    list_bits.append(long_res[-1 : -creg.size - 1 : -1])
+
                 all_bits = "".join(list_bits)
 
                 counts[OutcomeArray.from_readouts([[int(x) for x in all_bits]])] = n
