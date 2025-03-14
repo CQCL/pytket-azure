@@ -1,6 +1,7 @@
 *.egg-info
 *.pyc
 pytket/extensions/azure/_metadata.py
+.env
 docs/pyproject.toml
 docs/poetry.lock
 .venv
