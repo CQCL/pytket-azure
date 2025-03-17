@@ -3,8 +3,8 @@
 Changelog
 ~~~~~~~~~
 
-0.4.0rc2 (March 2025)
----------------------
+0.4.0 (March 2025)
+------------------
 
 * Update pytket minimium version requirement to 2.0.1.
 * Update minimum pytket-qir version to 0.21.1.
