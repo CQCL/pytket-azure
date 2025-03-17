@@ -489,7 +489,7 @@ using default compilation"
             self._jobs[handle].wait_until_completed(timeout_secs=kwargs.get("timeout"))
             circuit_status = self.circuit_status(handle)
             if circuit_status.status is StatusEnum.COMPLETED:
-                return cast(BackendResult, self._cache[handle]["result"])
+                return cast("BackendResult", self._cache[handle]["result"])
             else:
                 assert circuit_status.status is StatusEnum.ERROR
                 raise RuntimeError(f"Circuit has errored. {circuit_status}")
