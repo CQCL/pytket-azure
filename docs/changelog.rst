@@ -3,6 +3,13 @@
 Changelog
 ~~~~~~~~~
 
+0.5.0 (April 2025)
+------------------
+
+* Update azure-quantum minimium version requirement to 3.1.0.
+* Update pytket minimium version requirement to 2.2.0.
+* Update pytket-qir minimium version requirement to 0.22.0.
+
 0.4.0 (March 2025)
 ------------------
 
