@@ -18,7 +18,7 @@ from collections import Counter
 from collections.abc import Sequence
 from enum import Enum
 from functools import cache
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 from azure.quantum import Job, Workspace
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
@@ -68,24 +68,22 @@ class DeviceType(Enum):
 
 
 def _get_workspace(
-    resource_id: Optional[str] = None,
-    location: Optional[str] = None,
-    connection_string: Optional[str] = None,
+    resource_id: str | None = None,
+    location: str | None = None,
+    connection_string: str | None = None,
 ) -> Workspace:
     if os.getenv("AZURE_QUANTUM_CONNECTION_STRING") is not None:
         return Workspace()
-    else:
-        config = AzureConfig.from_default_config_file()
-        if config.use_string:
-            if connection_string is None:
-                connection_string = config.connection_string
-            return Workspace.from_connection_string(connection_string)
-        else:
-            if resource_id is None:
-                resource_id = config.resource_id
-            if location is None:
-                location = config.location
-            return Workspace(resource_id=resource_id, location=location)
+    config = AzureConfig.from_default_config_file()
+    if config.use_string:
+        if connection_string is None:
+            connection_string = config.connection_string
+        return Workspace.from_connection_string(connection_string)
+    if resource_id is None:
+        resource_id = config.resource_id
+    if location is None:
+        location = config.location
+    return Workspace(resource_id=resource_id, location=location)
 
 
 _GATE_SET = {
@@ -138,9 +136,9 @@ class AzureBackend(Backend):
     def __init__(
         self,
         name: str,
-        resource_id: Optional[str] = None,
-        location: Optional[str] = None,
-        connection_string: Optional[str] = None,
+        resource_id: str | None = None,
+        location: str | None = None,
+        connection_string: str | None = None,
         use_string: bool = False,
     ):
         """Construct an Azure backend for a device.
@@ -196,12 +194,12 @@ class AzureBackend(Backend):
             elif self._backendinfo.device_name[:8] == "rigetti.":
                 self._device_type = DeviceType.Rigetti
             else:
-                warnings.warn(
+                warnings.warn(  # noqa: B028
                     f"Unknown device type for {self._backendinfo.device_name},\
 using default compilation"
                 )
         else:
-            warnings.warn("Unknown device type, using default compilation")
+            warnings.warn("Unknown device type, using default compilation")  # noqa: B028
 
     @property
     def backend_info(self) -> BackendInfo:
@@ -220,8 +218,7 @@ using default compilation"
                 _QUANTINUUM_TARGET_GATESET,
                 allow_swaps=True,
             )
-        else:
-            return AutoRebase(gateset=_GATE_SET)
+        return AutoRebase(gateset=_GATE_SET)
 
     def default_compilation_pass(
         self, optimisation_level: int = 2, timeout: int = 300
@@ -270,7 +267,7 @@ using default compilation"
                     RemoveRedundancies(),
                 ]
             )
-        elif optimisation_level == 2:
+        elif optimisation_level == 2:  # noqa: PLR2004
             passlist.append(
                 FullPeepholeOptimise(
                     allow_swaps=True,
@@ -344,7 +341,7 @@ using default compilation"
     def process_circuits(
         self,
         circuits: Sequence[Circuit],
-        n_shots: Union[None, int, Sequence[Optional[int]]] = None,
+        n_shots: None | int | Sequence[int | None] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
@@ -359,7 +356,7 @@ using default compilation"
         """
         option_params = kwargs.get("option_params")
         circuits = list(circuits)
-        n_shots_list = Backend._get_n_shots_as_list(
+        n_shots_list = Backend._get_n_shots_as_list(  # noqa: SLF001
             n_shots,
             len(circuits),
             optional=False,
@@ -369,8 +366,7 @@ using default compilation"
             self._check_all_circuits(circuits)
 
         handles = []
-        for i, (c, n_shots) in enumerate(zip(circuits, n_shots_list)):
-
+        for i, (c, n_shots) in enumerate(zip(circuits, n_shots_list, strict=False)):  # noqa: PLR1704
             input_params = {
                 "entryPoint": "main",
                 "arguments": [],
@@ -378,7 +374,6 @@ using default compilation"
             }
 
             if self._device_type == DeviceType.Quantinuum:
-
                 module_bitcode = pytket_to_qir(
                     c,
                     qir_format=QIRFormat.STRING,
@@ -411,7 +406,7 @@ using default compilation"
             self._result_bits[handle] = c.bits
             self._result_c_regs[handle] = c.c_registers
         for handle in handles:
-            self._cache[handle] = dict()
+            self._cache[handle] = dict()  # noqa: C408
         return handles
 
     def _update_cache_result(
@@ -433,7 +428,9 @@ using default compilation"
                 n = int(n_shots * p + 0.5)
                 assert len(outcome) == len(self._result_c_regs[handle])
                 list_bits: list = []
-                for res, creg in zip(outcome, self._result_c_regs[handle]):
+                for res, creg in zip(
+                    outcome, self._result_c_regs[handle], strict=False
+                ):
                     long_res = bin(int(res)).replace(
                         "0b",
                         "0000000000000000000000000000000000000\
@@ -445,13 +442,12 @@ using default compilation"
 
                 counts[OutcomeArray.from_readouts([[int(x) for x in all_bits]])] = n
             return BackendResult(counts=counts, c_bits=self._result_bits[handle])
-        else:
-            for s, p in results.items():
-                outcome = literal_eval(s)
-                n = int(n_shots * p + 0.5)
-                oa = OutcomeArray.from_readouts([outcome])
-                counts[oa] = n
-            return BackendResult(counts=counts)
+        for s, p in results.items():
+            outcome = literal_eval(s)
+            n = int(n_shots * p + 0.5)
+            oa = OutcomeArray.from_readouts([outcome])
+            counts[oa] = n
+        return BackendResult(counts=counts)
 
     def circuit_status(self, handle) -> CircuitStatus:
         job = self._jobs[handle]
@@ -464,16 +460,13 @@ using default compilation"
                 {"result": self._make_backend_result(results, job, handle)},
             )
             return CircuitStatus(StatusEnum.COMPLETED)
-        elif status == "Waiting":
+        if status == "Waiting":
             return CircuitStatus(StatusEnum.QUEUED)
-        elif status == "Executing":
+        if status == "Executing":
             return CircuitStatus(StatusEnum.RUNNING)
-        elif status == "Failed":
+        if status == "Failed":
             return CircuitStatus(StatusEnum.ERROR, job.details.error_data.message)
-        else:
-            return CircuitStatus(
-                StatusEnum.ERROR, f"Unrecognized job status: '{status}'"
-            )
+        return CircuitStatus(StatusEnum.ERROR, f"Unrecognized job status: '{status}'")
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """
@@ -490,9 +483,8 @@ using default compilation"
             circuit_status = self.circuit_status(handle)
             if circuit_status.status is StatusEnum.COMPLETED:
                 return cast("BackendResult", self._cache[handle]["result"])
-            else:
-                assert circuit_status.status is StatusEnum.ERROR
-                raise RuntimeError(f"Circuit has errored. {circuit_status}")
+            assert circuit_status.status is StatusEnum.ERROR
+            raise RuntimeError(f"Circuit has errored. {circuit_status}")  # noqa: B904
 
     def is_available(self) -> bool:
         """Availability reported by the target."""

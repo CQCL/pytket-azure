@@ -367,4 +367,4 @@ def test_quantinuum_option_params(azure_backend: AzureBackend) -> None:
         assert all(x[0] == x[1] for x in counts)
         assert any(x[0] == 1 for x in counts)  # might fail in very rare cases
     else:
-        warnings.warn("quantinuum.sim.h1-1e unavailable")
+        warnings.warn("quantinuum.sim.h1-1e unavailable")  # noqa: B028

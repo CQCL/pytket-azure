@@ -15,7 +15,7 @@
 """Azure config."""
 
 from dataclasses import dataclass
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 from pytket.config import PytketExtConfig
 
@@ -26,9 +26,9 @@ class AzureConfig(PytketExtConfig):
 
     ext_dict_key: ClassVar[str] = "azure"
 
-    resource_id: Optional[str]
-    location: Optional[str]
-    connection_string: Optional[str]
+    resource_id: str | None
+    location: str | None
+    connection_string: str | None
     use_string: bool = False
 
     @classmethod
@@ -44,9 +44,9 @@ class AzureConfig(PytketExtConfig):
 
 
 def set_azure_config(
-    resource_id: Optional[str] = None,
-    location: Optional[str] = None,
-    connection_string: Optional[str] = None,
+    resource_id: str | None = None,
+    location: str | None = None,
+    connection_string: str | None = None,
     use_string: bool = False,
 ) -> None:
     """Save Azure confuguration."""
