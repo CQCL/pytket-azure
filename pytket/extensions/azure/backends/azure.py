@@ -346,7 +346,7 @@ using default compilation"
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
         """
-        See :py:meth:`pytket.backends.Backend.process_circuits`.
+        See :py:meth:`pytket.backends.backend.Backend.process_circuits`.
 
         Supported kwargs:
 
@@ -470,7 +470,7 @@ using default compilation"
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """
-        See :py:meth:`pytket.backends.Backend.get_result`.
+        See :py:meth:`pytket.backends.backend.Backend.get_result`.
 
         Supported kwargs:
 
@@ -500,7 +500,7 @@ using default compilation"
     @cache
     def available_devices(cls, **kwargs: Any) -> list[BackendInfo]:
         """
-        See :py:meth:`pytket.backends.Backend.get_result`.
+        See :py:meth:`pytket.backends.backend.Backend.get_result`.
 
         Supported kwargs:
 
