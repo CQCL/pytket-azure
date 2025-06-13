@@ -354,7 +354,7 @@ using default compilation"
           key-value pairs in the dictionary are passed as input parameters to
           the backend. Their semantics are backend-dependent.
 
-        :return: Handles to results for each input circuit, as an interable in
+        :return: Handles to results for each input circuit, as an iterable in
             the same order as the circuits.
         """
         option_params = kwargs.get("option_params")
