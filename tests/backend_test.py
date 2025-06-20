@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-import warnings
 from collections import Counter
 
 import pytest
@@ -46,9 +45,7 @@ def test_ionq_simulator(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert counts == Counter({(0, 0): 5, (1, 1): 5})
     else:
-        warnings.warn(  # noqa: B028
-            "ionq.simulator unavailable or queue time >= 60s: not submitting"
-        )
+        pytest.skip("ionq.simulator unavailable or queue time >= 60s: not submitting")
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -63,7 +60,7 @@ def test_quantinuum_sim_h11sc(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        warnings.warn(  # noqa: B028
+        pytest.skip(
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -93,7 +90,7 @@ def test_quantinuum_sim_h11sc_complex_circuit(azure_backend: AzureBackend) -> No
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        warnings.warn(  # noqa: B028
+        pytest.skip(
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -120,7 +117,7 @@ def test_quantinuum_sim_h11sc_complex_circuit_2(azure_backend: AzureBackend) -> 
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        warnings.warn(  # noqa: B028
+        pytest.skip(
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -157,7 +154,7 @@ def test_quantinuum_sim_h11sc_complex_circuit_3(azure_backend: AzureBackend) -> 
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        warnings.warn(  # noqa: B028
+        pytest.skip(
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -180,7 +177,7 @@ def test_quantinuum_sim_h11sc_two_regs(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        warnings.warn(  # noqa: B028
+        pytest.skip(
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -206,7 +203,7 @@ def test_quantinuum_sim_h11sc_reset_gate(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        warnings.warn(  # noqa: B028
+        pytest.skip(
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -239,7 +236,7 @@ def test_quantinuum_sim_h11sc_complex(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        warnings.warn(  # noqa: B028
+        pytest.skip(
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -276,7 +273,7 @@ def test_quantinuum_sim_h11e_cond(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        warnings.warn(  # noqa: B028
+        pytest.skip(
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -349,7 +346,7 @@ def test_quantinuum_sim_h11e_cond_2(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        warnings.warn(  # noqa: B028
+        pytest.skip(
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -367,4 +364,4 @@ def test_quantinuum_option_params(azure_backend: AzureBackend) -> None:
         assert all(x[0] == x[1] for x in counts)
         assert any(x[0] == 1 for x in counts)  # might fail in very rare cases
     else:
-        warnings.warn("quantinuum.sim.h1-1e unavailable")  # noqa: B028
+        pytest.skip("quantinuum.sim.h1-1e unavailable")
