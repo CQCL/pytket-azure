@@ -228,7 +228,7 @@ using default compilation"
             prompting more computationally heavy optimising compilation that
             can lead to reduced gate count in circuits.
         :param timeout: Only valid for optimisation level 3, gives a maximimum time
-            for running a single thread of the pass `GreedyPauliSimp`. Increase for
+            for running a single thread of the pass :py:meth:`pytket.passes.GreedyPauliSimp`. Increase for
             optimising larger circuits.
 
         :return: Compilation pass for compiling circuits to Quantinuum devices
@@ -346,13 +346,16 @@ using default compilation"
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
         """
-        See :py:meth:`pytket.backends.Backend.process_circuits`.
+        See :py:meth:`pytket.backends.backend.Backend.process_circuits`.
 
         Supported kwargs:
 
         - option_params: a dictionary with string keys and arbitrary values;
           key-value pairs in the dictionary are passed as input parameters to
           the backend. Their semantics are backend-dependent.
+
+        :return: Handles to results for each input circuit, as an iterable in
+            the same order as the circuits.
         """
         option_params = kwargs.get("option_params")
         circuits = list(circuits)
@@ -470,11 +473,13 @@ using default compilation"
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """
-        See :py:meth:`pytket.backends.Backend.get_result`.
+        See :py:meth:`pytket.backends.backend.Backend.get_result`.
 
         Supported kwargs:
 
         - timeout (int): timeout in seconds
+
+        :return: Results corresponding to handle.
         """
         try:
             return super().get_result(handle)
@@ -500,7 +505,7 @@ using default compilation"
     @cache
     def available_devices(cls, **kwargs: Any) -> list[BackendInfo]:
         """
-        See :py:meth:`pytket.backends.Backend.get_result`.
+        See :py:meth:`pytket.backends.backend.Backend.available_devices`.
 
         Supported kwargs:
 
@@ -511,6 +516,8 @@ using default compilation"
 
         If omitted these are read from config, unless the environment variable
         `AZURE_QUANTUM_CONNECTION_STRING` is set in which case it is used.
+
+        :return: A list of BackendInfo objects describing available devices.
         """
         if kwargs.get("use_string"):
             connection_string = kwargs.get("connection_string")
