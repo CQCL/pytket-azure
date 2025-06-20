@@ -46,7 +46,7 @@ def test_ionq_simulator(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert counts == Counter({(0, 0): 5, (1, 1): 5})
     else:
-        raise ValueError(
+        warnings.warn(  # noqa: B028
             "ionq.simulator unavailable or queue time >= 60s: not submitting"
         )
 
@@ -63,7 +63,7 @@ def test_quantinuum_sim_h11sc(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        raise ValueError(
+        warnings.warn(  # noqa: B028
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -93,7 +93,7 @@ def test_quantinuum_sim_h11sc_complex_circuit(azure_backend: AzureBackend) -> No
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        raise ValueError(
+        warnings.warn(  # noqa: B028
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -120,7 +120,7 @@ def test_quantinuum_sim_h11sc_complex_circuit_2(azure_backend: AzureBackend) -> 
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        raise ValueError(
+        warnings.warn(  # noqa: B028
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -157,7 +157,7 @@ def test_quantinuum_sim_h11sc_complex_circuit_3(azure_backend: AzureBackend) -> 
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        raise ValueError(
+        warnings.warn(  # noqa: B028
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -180,7 +180,7 @@ def test_quantinuum_sim_h11sc_two_regs(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        raise ValueError(
+        warnings.warn(  # noqa: B028
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -206,7 +206,7 @@ def test_quantinuum_sim_h11sc_reset_gate(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        raise ValueError(
+        warnings.warn(  # noqa: B028
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -239,7 +239,7 @@ def test_quantinuum_sim_h11sc_complex(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        raise ValueError(
+        warnings.warn(  # noqa: B028
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -276,7 +276,7 @@ def test_quantinuum_sim_h11e_cond(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        raise ValueError(
+        warnings.warn(  # noqa: B028
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
@@ -349,7 +349,7 @@ def test_quantinuum_sim_h11e_cond_2(azure_backend: AzureBackend) -> None:
         counts = r.get_counts()
         assert sum(counts.values()) == 1000
     else:
-        raise ValueError(
+        warnings.warn(  # noqa: B028
             "quantinuum.sim.h1-1sc unavailable or queue time >= 60s: not submitting"
         )
 
