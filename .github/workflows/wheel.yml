@@ -24,9 +24,9 @@ jobs:
         python-version: '3.10'
     - name: Build and test
       shell: bash
-      env:
-        PYTKET_RUN_REMOTE_TESTS: 1
-        AZURE_QUANTUM_CONNECTION_STRING: ${{ secrets.AZURE_QUANTUM_CONNECTION_STRING }}
+      # env:
+      #   PYTKET_RUN_REMOTE_TESTS: 1
+      #   AZURE_QUANTUM_CONNECTION_STRING: ${{ secrets.AZURE_QUANTUM_CONNECTION_STRING }}
       run: ./.github/workflows/build-test mypy
     - uses: actions/upload-artifact@v4
       if: github.event_name == 'release' || contains(github.ref, 'refs/heads/wheel')

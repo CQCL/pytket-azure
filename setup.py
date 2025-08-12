@@ -34,7 +34,7 @@ The `pytket-azure` extension allows `pytket` circuits to be submitted and
 executed on various devices and simulators via
 [Azure Quantum](https://learn.microsoft.com/en-us/azure/quantum/).
 
-Note that this package is still at an early, experimental stage of development.
+*Warning:* This package is not currently maintained.
 """
 
 setup(
