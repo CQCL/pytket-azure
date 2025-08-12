@@ -3,6 +3,11 @@
 Changelog
 ~~~~~~~~~
 
+0.5.1 (August 2025)
+-------------------
+
+Warn that package is unmaintained.
+
 0.5.0 (April 2025)
 ------------------
 
